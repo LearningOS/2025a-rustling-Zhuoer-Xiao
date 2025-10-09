@@ -2,11 +2,9 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
-use std::vec::*;
 
 #[derive(Debug)]
 struct Node<T> {
@@ -22,6 +20,7 @@ impl<T> Node<T> {
         }
     }
 }
+
 #[derive(Debug)]
 struct LinkedList<T> {
     length: u32,
@@ -69,15 +68,70 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+    where
+        T: Ord,
+    {
+        let mut result = LinkedList::new();
+        let mut current_a = list_a.start;
+        let mut current_b = list_b.start;
+        
+        let mut tail: Option<NonNull<Node<T>>> = None;
+        
+        unsafe {
+            while let (Some(ptr_a), Some(ptr_b)) = (current_a, current_b) {
+                let node_a = ptr_a.as_ref();
+                let node_b = ptr_b.as_ref();
+                
+                let selected_ptr = if node_a.val <= node_b.val {
+                    current_a = node_a.next;
+                    ptr_a
+                } else {
+                    current_b = node_b.next;
+                    ptr_b
+                };
+                
+                // 将选中的节点添加到结果链表中
+                if let Some(tail_ptr) = tail {
+                    (*tail_ptr.as_ptr()).next = Some(selected_ptr);
+                } else {
+                    result.start = Some(selected_ptr);
+                }
+                
+                tail = Some(selected_ptr);
+                result.length += 1;
+            }
+            
+            // 处理剩余节点
+            let remaining = if current_a.is_some() { current_a } else { current_b };
+            if let Some(remaining_ptr) = remaining {
+                if let Some(tail_ptr) = tail {
+                    (*tail_ptr.as_ptr()).next = Some(remaining_ptr);
+                } else {
+                    result.start = Some(remaining_ptr);
+                }
+                
+                // 计算剩余节点数量并更新长度
+                let mut count_ptr = remaining;
+                while let Some(ptr) = count_ptr {
+                    result.length += 1;
+                    count_ptr = (*ptr.as_ptr()).next;
+                }
+            }
+            
+            // 更新结果链表的end指针
+            if let Some(last_ptr) = remaining.or_else(|| tail) {
+                let mut last = last_ptr;
+                while let Some(next) = (*last.as_ptr()).next {
+                    last = next;
+                }
+                result.end = Some(last);
+            }
         }
-	}
+        
+        result
+    }
 }
 
 impl<T> Display for LinkedList<T>
