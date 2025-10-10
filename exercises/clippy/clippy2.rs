@@ -6,8 +6,10 @@
 
 fn main() {
     let mut res = 42;
-    let option = Some(12);
-    while let Some(x) = option {
+    let mut option = Some(12);
+    
+    // 使用 if let 代替 while let，避免无限循环
+    if let Some(x) = option.take() {
         res += x;
     }
 
